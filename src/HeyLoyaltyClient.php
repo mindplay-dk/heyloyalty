@@ -231,4 +231,24 @@ class HeyLoyaltyClient
 
 		return $fields;
 	}
+
+    private function buildMember($data)
+    {
+        // TODO build out this function
+
+        // must handle these special fields:
+
+//        $data['guid'] = $member['id'];
+//        $data['list_id'] = $list_id;
+//        $data['status'] = $member['status']['status'];
+//        $data['status_email'] = $member['status']['email'];
+//        $data['status_mobile'] = $member['status']['mobile'];
+//        $data['sent_mail'] = $member['sent_mail'];
+//        $data['sent_sms'] = $member['sent_sms'];
+//        $data['open_rate'] = $member['open_rate'];
+//        $data['imported'] = $member['imported'] ? '1' : '0';
+//        $data['created_at'] = $member['created_at'];
+//        $data['updated_at'] = $member['updated_at'];
+
+    }
 }
