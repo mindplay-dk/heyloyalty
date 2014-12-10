@@ -4,6 +4,7 @@ namespace mindplay\heyloyalty;
 
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\RequestInterface;
+use RuntimeException;
 
 /**
  * This class implements a client for the Hey Loyalty API.
@@ -22,6 +23,12 @@ class HeyLoyaltyClient
 	/** @var Client HTTP client */
 	private $client;
 
+    /** @var HeyLoyaltyList[] map of cached Lists where List ID => HeyLoyaltyList */
+    private $list_cache = array();
+
+    /** @var HeyLoyaltyMediator */
+    private $mediator;
+
 	/**
 	 * @param string $api_key
 	 * @param string $api_secret
@@ -32,6 +39,7 @@ class HeyLoyaltyClient
 		$this->api_secret = $api_secret;
 
 		$this->client = $this->createClient();
+        $this->mediator = new HeyLoyaltyMediator();
 	}
 
     /**
@@ -128,13 +136,21 @@ class HeyLoyaltyClient
     }
 
 	/**
+     * Obtain information about a list and it's fields.
+     *
+     * Lists are cached for subsequent calls.
+     *
 	 * @param int $list_id
 	 *
 	 * @return HeyLoyaltyList
 	 */
 	public function getList($list_id)
 	{
-		return $this->buildList($this->createGetRequest("lists/{$list_id}")->send()->json());
+        if (!isset($this->list_cache[$list_id])) {
+            $this->list_cache[$list_id] = $this->buildList($this->createGetRequest("lists/{$list_id}")->send()->json());
+        }
+
+        return $this->list_cache[$list_id];
 	}
 
 	/**
@@ -146,13 +162,16 @@ class HeyLoyaltyClient
 	}
 
 	/**
+     * Find a list of members by matching against a custom set of criteria.
+     *
 	 * @param int $list_id
 	 * @param int $page
 	 * @param int $per_page
+     * @param HeyLoyaltyListFilter|null $filter
 	 *
-	 * @return array|bool|float|int|string
+	 * @return HeyLoyaltyMember[]
 	 */
-	public function getListMembers($list_id, $page, $per_page)
+	public function getListMembers($list_id, $page, $per_page, HeyLoyaltyListFilter $filter = null)
 	{
 		$request = $this->createGetRequest("lists/{$list_id}/members");
 
@@ -161,18 +180,92 @@ class HeyLoyaltyClient
 			->add('perpage', $per_page)
 			->add('orderby', 'created_at');
 
-		return $request->send()->json(); // TODO build out a model
+        if ($filter !== null) {
+            $params = $request->getQuery();
+
+            $filters = $filter->toArray();
+
+            foreach ($filters as $key => $value) {
+                $params->add($key, $value);
+            }
+        }
+
+        $result = $request->send()->json();
+
+        $members = array();
+
+        if (!empty($result['members'])) {
+            foreach ($result['members'] as $data) {
+                $members[] = $this->buildMember($list_id, $data);
+            }
+        }
+
+        return $members;
 	}
 
+    /**
+     * Find a list member by e-mail address.
+     *
+     * This should be used only for lists that DO NOT contain duplicates.
+     *
+     * @param int $list_id
+     * @param string $email
+     *
+     * @return HeyLoyaltyMember|null
+     */
+    public function getListMemberByEmail($list_id, $email)
+    {
+        $filter = new HeyLoyaltyListFilter();
+        $filter->equalTo('email', 'rasc@fynskemedier.dk');
+
+        $members = $this->getListMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
+
+        return count($members) ? $members[0] : null;
+    }
+
+    /**
+     * Enumerate all of the members on a list, or a subset based on filter crieria.
+     *
+     * For nightly imports, etc. - may result in multiple round-trips to the API for batches of member records.
+     *
+     * @param int $list_id
+     * @param callable $callback a callback function (HeyLoyaltyMember $member) : void
+     * @param HeyLoyaltyListFilter|null $filter
+     *
+     * @return void
+     */
+    public function enumerateListMembers($list_id, $callback, $filter = null)
+    {
+        $total = 0;
+
+        $page = 1;
+
+        $PER_PAGE = 1000;
+
+        do {
+            $members = $this->getListMembers($list_id, $page, $PER_PAGE, $filter);
+
+            $page += 1;
+
+            $total += count($members);
+
+            foreach ($members as $member) {
+                call_user_func($callback, $member);
+            }
+        } while (count($members));
+    }
+
 	/**
+     * Get an individual Member with a known Hey Loyalty Member GUID
+     *
 	 * @param int $list_id
-	 * @param string $member_id
+	 * @param string $member_id Hey Loyalty Member GUID
 	 *
-	 * @return array
+	 * @return HeyLoyaltyMember
 	 */
 	public function getMember($list_id, $member_id)
 	{
-		return $this->createGetRequest("lists/{$list_id}/members/{$member_id}")->send()->json(); // TODO build out a model
+		return $this->buildMember($list_id, $this->createGetRequest("lists/{$list_id}/members/{$member_id}")->send()->json());
 	}
 
 	/**
@@ -182,8 +275,6 @@ class HeyLoyaltyClient
 	 */
 	private function buildList($data)
 	{
-        var_dump($data);
-
 		$list = new HeyLoyaltyList();
 
 		$list->id = (int) $data['id'];
@@ -193,8 +284,6 @@ class HeyLoyaltyClient
         $list->duplicates = $data['duplicates'];
 
 		$list->fields = $this->buildFields($list->id, $data['fields']);
-
-        // TODO build out the HeyLoyaltyList model with additional properties
 
 		return $list;
 	}
@@ -232,23 +321,35 @@ class HeyLoyaltyClient
 		return $fields;
 	}
 
-    private function buildMember($data)
+    /**
+     * @param int $list_id
+     * @param array $data
+     *
+     * @return HeyLoyaltyMember
+     */
+    private function buildMember($list_id, $data)
     {
-        // TODO build out this function
+        $member = new HeyLoyaltyMember();
 
-        // must handle these special fields:
+        $member->id = $data['id'];
+        $member->status = $data['status']['status'];
+        $member->status_email = $data['status']['email'];
+        $member->status_mobile = $data['status']['mobile'];
+        $member->sent_mail = $data['sent_mail'];
+        $member->sent_sms = $data['sent_sms'];
+        $member->open_rate = $data['open_rate'];
+        $member->imported = $data['imported'];
+        $member->created_at = $this->mediator->parseDateTime($data['created_at']);
+        $member->updated_at = $this->mediator->parseDateTime($data['updated_at']);
 
-//        $data['guid'] = $member['id'];
-//        $data['list_id'] = $list_id;
-//        $data['status'] = $member['status']['status'];
-//        $data['status_email'] = $member['status']['email'];
-//        $data['status_mobile'] = $member['status']['mobile'];
-//        $data['sent_mail'] = $member['sent_mail'];
-//        $data['sent_sms'] = $member['sent_sms'];
-//        $data['open_rate'] = $member['open_rate'];
-//        $data['imported'] = $member['imported'] ? '1' : '0';
-//        $data['created_at'] = $member['created_at'];
-//        $data['updated_at'] = $member['updated_at'];
+        $fields = $this->getList($list_id)->fields;
 
+        foreach ($fields as $name => $field) {
+            if (array_key_exists($name, $data)) {
+                $member->$name = $this->mediator->parseValue($field->format, $data[$name]);
+            }
+        }
+
+        return $member;
     }
 }
