@@ -2,8 +2,11 @@
 
 namespace mindplay\heyloyalty;
 
+use Exception;
 use Guzzle\Http\Client;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\QueryString;
 use RuntimeException;
 
 /**
@@ -216,7 +219,27 @@ class HeyLoyaltyClient
     public function getListMemberByEmail($list_id, $email)
     {
         $filter = new HeyLoyaltyListFilter();
-        $filter->equalTo('email', 'rasc@fynskemedier.dk');
+        $filter->equalTo('email', $email);
+
+        $members = $this->getListMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
+
+        return count($members) ? $members[0] : null;
+    }
+
+    /**
+     * Find a list member by mobile phone number.
+     *
+     * This should be used only for lists that DO NOT contain duplicates.
+     *
+     * @param int $list_id
+     * @param string $mobile
+     *
+     * @return HeyLoyaltyMember|null
+     */
+    public function getListMemberByPhone($list_id, $mobile)
+    {
+        $filter = new HeyLoyaltyListFilter();
+        $filter->equalTo('mobile', $mobile);
 
         $members = $this->getListMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
 
@@ -263,10 +286,146 @@ class HeyLoyaltyClient
 	 *
 	 * @return HeyLoyaltyMember
 	 */
-	public function getMember($list_id, $member_id)
+	public function loadMember($list_id, $member_id)
 	{
 		return $this->buildMember($list_id, $this->createGetRequest("lists/{$list_id}/members/{$member_id}")->send()->json());
 	}
+
+    /**
+     * Save a new or existing Member.
+     *
+     * @param HeyLoyaltyMember $member
+     */
+    public function saveMember(HeyLoyaltyMember $member)
+    {
+        if ($member->id) {
+            $this->updateMember($member);
+        } else {
+            $this->createMember($member);
+        }
+    }
+
+    /**
+     * Adds a given new Member ($id === null) to a specified Hey Loyalty List.
+     *
+     * @param HeyLoyaltyMember $member
+     *
+     * @return string new Hey Loyalty Member GUID
+     */
+    public function createMember(HeyLoyaltyMember $member)
+    {
+        if ($member->id) {
+            throw new RuntimeException("cannot create a member when \$id is already set");
+        }
+
+        $request = $this->createPostRequest("lists/{$member->list_id}/members");
+
+        /** @var QueryString $post */
+        $post = $request->getPostFields();
+
+        $fields = $this->getList($member->list_id)->fields;
+
+        foreach ($fields as $name => $field) {
+            $post->add($name, $this->mediator->formatValue($field->format, $member->$name));
+        }
+
+        $response = $request->send();
+
+        if ($response->getStatusCode() !== 201) {
+            throw new RuntimeException("unexpected HTTP status code {$response->getStatusCode()} - response: \n" . $response->getBody(true));
+        }
+
+        $result = $response->json();
+
+        $member->id = $result['id'];
+
+        return $member->id;
+    }
+
+    /**
+     * Update a given existing Member ($id != null) previously retrieved from a Hey Loyalty List.
+     *
+     * @param HeyLoyaltyMember $member
+     *
+     * @return void
+     */
+    public function updateMember(HeyLoyaltyMember $member)
+    {
+        if (! $member->id) {
+            throw new RuntimeException("cannot update a member with no \$id");
+        }
+
+        $request = $this->createPutRequest("lists/{$member->list_id}/members/{$member->member_id}");
+
+        /** @var QueryString $post */
+        $post = $request->getPostFields();
+
+        $fields = $this->getList($member->list_id)->fields;
+
+        foreach ($fields as $name => $field) {
+            if (isset($data[$name])) {
+                $post->add($name, $this->mediator->formatValue($field->format, $data[$name]));
+            }
+        }
+
+        $response = $request->send();
+
+        if ($response->getStatusCode() !== 201) {
+            throw new RuntimeException("unexpected HTTP status code {$response->getStatusCode()} - response: \n" . $response->getBody(true));
+        }
+    }
+
+    /**
+     * Delete an existing Hey Loyalty Member.
+     *
+     * @param HeyLoyaltyMember|string $member Member object
+     *
+     * @return void
+     */
+    public function deleteMember(HeyLoyaltyMember $member)
+    {
+        $request = $this->createDeleteRequest("lists/{$member->list_id}/members/{$member->id}");
+
+        $response = $request->send();
+
+        if ($response->getStatusCode() !== 201) {
+            throw new RuntimeException("unexpected HTTP status code {$response->getStatusCode()} - response: \n" . $response->getBody(true));
+        }
+    }
+
+    /**
+     * Patch a member with a known Hey Loyalty Member GUID.
+     *
+     * The given data must be complete - any field values omitted from the given
+     * data, will cause any existing data in those fields to be lost!
+     *
+     * @param int $list_id Hey Loyalty List ID
+     * @param string $member_id Hey Loyalty Member GUID
+     * @param array $data complete data set with all fields (as native PHP values)
+     *
+     * @return void
+     */
+    public function updateMemberData($list_id, $member_id, $data)
+    {
+        $request = $this->createPutRequest("lists/{$list_id}/members/{$member_id}");
+
+        /** @var QueryString $post */
+        $post = $request->getPostFields();
+
+        $fields = $this->getList($list_id)->fields;
+
+        foreach ($fields as $name => $field) {
+            if (isset($data[$name])) {
+                $post->add($name, $this->mediator->formatValue($field->format, $data[$name]));
+            }
+        }
+
+        $response = $request->send();
+
+        if ($response->getStatusCode() !== 201) {
+            throw new RuntimeException("unexpected HTTP status code {$response->getStatusCode()} - response: \n" . $response->getBody(true));
+        }
+    }
 
 	/**
 	 * @param array $data
@@ -322,6 +481,8 @@ class HeyLoyaltyClient
 	}
 
     /**
+     * Build a new member instance using data from the Hey Loyalty API
+     *
      * @param int $list_id
      * @param array $data
      *
@@ -329,8 +490,24 @@ class HeyLoyaltyClient
      */
     private function buildMember($list_id, $data)
     {
-        $member = new HeyLoyaltyMember();
+        $member = new HeyLoyaltyMember($list_id);
 
+        $this->populateMember($member, $data);
+
+        return $member;
+    }
+
+    /**
+     * Update a member object with data from the Hey Loyalty API
+     *
+     * @param HeyLoyaltyMember $member
+     * @param array $data
+     *
+     * @internal param int $list_id
+     * @return void
+     */
+    private function populateMember($member, $data)
+    {
         $member->id = $data['id'];
         $member->status = $data['status']['status'];
         $member->status_email = $data['status']['email'];
@@ -342,14 +519,12 @@ class HeyLoyaltyClient
         $member->created_at = $this->mediator->parseDateTime($data['created_at']);
         $member->updated_at = $this->mediator->parseDateTime($data['updated_at']);
 
-        $fields = $this->getList($list_id)->fields;
+        $fields = $this->getList($member->list_id)->fields;
 
         foreach ($fields as $name => $field) {
             if (array_key_exists($name, $data)) {
                 $member->$name = $this->mediator->parseValue($field->format, $data[$name]);
             }
         }
-
-        return $member;
     }
 }

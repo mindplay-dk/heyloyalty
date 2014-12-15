@@ -83,7 +83,7 @@ function format($value, $verbose = false)
 {
     if ($value instanceof Exception) {
         return get_class($value)
-        . ($verbose ? ": \"" . $value->getMessage() . "\"" : '');
+        . ($verbose ? ": \"" . $value->__toString() . "\"" : '');
     }
 
     if (! $verbose && is_array($value)) {

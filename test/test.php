@@ -98,6 +98,8 @@ test(
         ok(is_bool($member->boolean), 'handles bool fields');
         ok(is_int($member->choice), 'handles choice fields');
 
+        eq(count($member->multi), 2, 'handles multi-value fields (total = 2)');
+
         foreach ($member->multi as $value) {
             ok(is_int($value), "handles multi-value fields (#{$value})");
         }
@@ -106,16 +108,36 @@ test(
 );
 
 test(
-    'Testing',
+    'Can create a new member',
     function () use ($client) {
+        /** @var TestMember $member */
+        $member = new HeyLoyaltyMember(HEY_LOYALTY_LIST_ID);
 
-        #$list = $client->getList(HEY_LOYALTY_LIST_ID);
-        #var_dump($list);
+        /** @var TestMember $member */
+        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, 'rasc@fynskemedier.dk');
 
-        #var_dump($client->getLists());
+        ok($member !== null, 'precondition: member found');
 
-        #var_dump($client->getMember(HEY_LOYALTY_LIST_ID, '08539079-ed39-49b5-9b87-ad7651bd579f'));
+        unset($member->id); // effectively gives us a clone of the existing member
+        unset($member->mobile); // API barfs on duplicate cell number
 
+        $member->email = 'rasc-2@fynskemedier.dk'; // barfs on duplicate e-mail
+
+        $client->createMember($member);
+    }
+);
+
+test(
+    'Can update an existing member',
+    function () use ($client) {
+        // TODO add test
+    }
+);
+
+test(
+    'Can delete a member',
+    function () use ($client) {
+        // TODO add test
     }
 );
 

@@ -7,16 +7,17 @@ use RuntimeException;
 /**
  * This class represents an individual Hey Loyalty List Member.
  *
- * @property string $id Hey Loyalty Member GUID
- * @property string $status membership status; one of the STATUS_ constants
- * @property mixed $status_email TODO field type and constants?
- * @property mixed $status_mobile TODO field type and constants?
- * @property int $sent_mail number of e-mail sent to this member
- * @property int $sent_sms number of SMS sent to this member
- * @property int $open_rate percentage of e-mails opened by this member
- * @property bool $imported true, if this member was imported
- * @property int $created_at the time at which this member was created (UNIX timestamp)
- * @property int $updated_at the time at which this member was last updated (UNIX timestamp)
+ * @property-read string $id Hey Loyalty Member GUID
+ * @property-read int $list_id Hey Loyalty List ID
+ * @property-read string $status membership status; one of the STATUS_ constants
+ * @property-read mixed $status_email TODO field type and constants?
+ * @property-read mixed $status_mobile TODO field type and constants?
+ * @property-read int $sent_mail number of e-mail sent to this member
+ * @property-read int $sent_sms number of SMS sent to this member
+ * @property-read int $open_rate percentage of e-mails opened by this member
+ * @property-read bool $imported true, if this member was imported
+ * @property-read int $created_at the time at which this member was created (UNIX timestamp)
+ * @property-read int $updated_at the time at which this member was last updated (UNIX timestamp)
  * @property int $postal_code ZIP/postal code
  * @property int $sex member sex; one of the SEX_* constants
  * @property string $email e-mail address
@@ -47,6 +48,14 @@ class HeyLoyaltyMember
     private $_values = array();
 
     /**
+     * @param int $list_id Hey Loyalty List ID
+     */
+    public function __construct($list_id)
+    {
+        $this->list_id = $list_id;
+    }
+
+    /**
      * @param string $name
      *
      * @return mixed
@@ -69,5 +78,17 @@ class HeyLoyaltyMember
     public function __set($name, $value)
     {
         $this->_values[$name] = $value;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return void
+     *
+     * @ignore
+     */
+    public function __unset($name)
+    {
+        unset($this->_values[$name]);
     }
 }
