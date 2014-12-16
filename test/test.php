@@ -44,7 +44,7 @@ $EXPECTED_CUSTOM_FIELDS = array(
 
 $ALL_EXPECTED_FIELDS = array_merge($EXPECTED_FIXED_FIELDS, $EXPECTED_CUSTOM_FIELDS);
 
-$member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+$member = $client->getMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
 
 if ($member instanceof HeyLoyaltyMember) {
     echo "Precondition failed: cleaning up member from previous failed test run.\n";
@@ -122,7 +122,7 @@ test(
     function () use ($client, $ALL_EXPECTED_FIELDS) {
 
         /** @var TestMember $member */
-        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, 'rasc@fynskemedier.dk');
+        $member = $client->getMemberByEmail(HEY_LOYALTY_LIST_ID, 'rasc@fynskemedier.dk');
 
         ok($member !== null, 'precondition: member found');
 
@@ -148,7 +148,7 @@ test(
         $member = new HeyLoyaltyMember(HEY_LOYALTY_LIST_ID);
 
         /** @var TestMember $member */
-        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, 'rasc@fynskemedier.dk');
+        $member = $client->getMemberByEmail(HEY_LOYALTY_LIST_ID, 'rasc@fynskemedier.dk');
 
         ok($member !== null, 'precondition: member found');
 
@@ -168,7 +168,7 @@ test(
 test(
     'Can update an existing member',
     function () use ($client) {
-        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+        $member = $client->getMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
 
         ok($member instanceof HeyLoyaltyMember, 'member found');
 
@@ -182,7 +182,7 @@ test(
 
         unset($member);
 
-        $member = $client->getListMemberByPhone(HEY_LOYALTY_LIST_ID, TEST_MOBILE);
+        $member = $client->getMemberByMobile(HEY_LOYALTY_LIST_ID, TEST_MOBILE);
 
         ok($member instanceof HeyLoyaltyMember, 'member found');
         eq($member->firstname, $FIRST_NAME, 'firstname saved');
@@ -195,7 +195,7 @@ test(
     function () use ($client) {
         $count = 0;
 
-        $client->enumerateListMembers(
+        $client->enumerateMembers(
             HEY_LOYALTY_LIST_ID,
             function (HeyLoyaltyMember $member) use (&$count) {
                 $count += 1;
@@ -209,7 +209,7 @@ test(
 test(
     'Can delete a member',
     function () use ($client) {
-        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+        $member = $client->getMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
 
         ok($member instanceof HeyLoyaltyMember, 'precondition: member exists');
 
@@ -217,7 +217,7 @@ test(
 
         unset($member);
 
-        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+        $member = $client->getMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
 
         ok($member === null, 'member deleted');
     }

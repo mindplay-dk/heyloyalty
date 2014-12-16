@@ -176,7 +176,7 @@ class HeyLoyaltyClient
      *
      * @return HeyLoyaltyMember[]
      */
-    public function getListMembers($list_id, $page, $per_page, HeyLoyaltyListFilter $filter = null)
+    public function getMembers($list_id, $page, $per_page, HeyLoyaltyListFilter $filter = null)
     {
         $request = $this->createGetRequest("lists/{$list_id}/members");
 
@@ -218,12 +218,12 @@ class HeyLoyaltyClient
      *
      * @return HeyLoyaltyMember|null
      */
-    public function getListMemberByEmail($list_id, $email)
+    public function getMemberByEmail($list_id, $email)
     {
         $filter = new HeyLoyaltyListFilter();
         $filter->equalTo('email', $email);
 
-        $members = $this->getListMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
+        $members = $this->getMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
 
         return count($members) ? $members[0] : null;
     }
@@ -238,12 +238,12 @@ class HeyLoyaltyClient
      *
      * @return HeyLoyaltyMember|null
      */
-    public function getListMemberByPhone($list_id, $mobile)
+    public function getMemberByMobile($list_id, $mobile)
     {
         $filter = new HeyLoyaltyListFilter();
         $filter->equalTo('mobile', $mobile);
 
-        $members = $this->getListMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
+        $members = $this->getMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
 
         return count($members) ? $members[0] : null;
     }
@@ -259,7 +259,7 @@ class HeyLoyaltyClient
      *
      * @return void
      */
-    public function enumerateListMembers($list_id, $callback, $filter = null)
+    public function enumerateMembers($list_id, $callback, $filter = null)
     {
         $total = 0;
 
@@ -268,7 +268,7 @@ class HeyLoyaltyClient
         $PER_PAGE = 1000;
 
         do {
-            $members = $this->getListMembers($list_id, $page, $PER_PAGE, $filter);
+            $members = $this->getMembers($list_id, $page, $PER_PAGE, $filter);
 
             $page += 1;
 
