@@ -7,6 +7,9 @@ use mindplay\heyloyalty\HeyLoyaltyListFilter;
 use mindplay\heyloyalty\HeyLoyaltyMediator;
 use mindplay\heyloyalty\HeyLoyaltyMember;
 
+define('TEST_EMAIL', 'rasc-2@fynskemedier.dk');
+define('TEST_MOBILE', '87654321');
+
 require __DIR__ . '/_header.php';
 
 if (! file_exists(__DIR__ . '/config.local.php')) {
@@ -42,6 +45,16 @@ $EXPECTED_CUSTOM_FIELDS = array(
 );
 
 $ALL_EXPECTED_FIELDS = array_merge($EXPECTED_FIXED_FIELDS, $EXPECTED_CUSTOM_FIELDS);
+
+$member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+
+if ($member instanceof HeyLoyaltyMember) {
+    echo "Precondition failed: cleaning up member from previous failed test run.\n";
+
+    $client->deleteMember($member);
+
+    unset($member);
+}
 
 test(
     'Can get List information',
@@ -119,25 +132,57 @@ test(
         ok($member !== null, 'precondition: member found');
 
         unset($member->id); // effectively gives us a clone of the existing member
-        unset($member->mobile); // API barfs on duplicate cell number
 
-        $member->email = 'rasc-2@fynskemedier.dk'; // barfs on duplicate e-mail
+        $member->mobile = TEST_MOBILE;
+        $member->email = TEST_EMAIL;
 
-        $client->createMember($member);
+        $member_id = $client->createMember($member);
+
+        ok($member_id != '', 'member ID returned', $member_id);
+
+        eq($member->id, $member_id, 'member ID applied to member');
     }
 );
 
 test(
     'Can update an existing member',
     function () use ($client) {
-        // TODO add test
+        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+
+        ok($member instanceof HeyLoyaltyMember, 'member found');
+
+        $FIRST_NAME = 'Charlie';
+        $LAST_NAME = 'Tuna';
+
+        $member->firstname = $FIRST_NAME;
+        $member->lastname = $LAST_NAME;
+
+        $client->updateMember($member);
+
+        unset($member);
+
+        $member = $client->getListMemberByPhone(HEY_LOYALTY_LIST_ID, TEST_MOBILE);
+
+        ok($member instanceof HeyLoyaltyMember, 'member found');
+        eq($member->firstname, $FIRST_NAME, 'firstname saved');
+        eq($member->lastname, $LAST_NAME, 'lastname saved');
     }
 );
 
 test(
     'Can delete a member',
     function () use ($client) {
-        // TODO add test
+        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+
+        ok($member instanceof HeyLoyaltyMember, 'precondition: member exists');
+
+        $client->deleteMember($member);
+
+        unset($member);
+
+        $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
+
+        ok($member === null, 'member deleted');
     }
 );
 

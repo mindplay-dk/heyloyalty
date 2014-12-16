@@ -321,6 +321,7 @@ class HeyLoyaltyClient
         $request = $this->createPostRequest("lists/{$member->list_id}/members");
 
         /** @var QueryString $post */
+        /** @noinspection PhpUndefinedMethodInspection */
         $post = $request->getPostFields();
 
         $fields = $this->getList($member->list_id)->fields;
@@ -355,9 +356,10 @@ class HeyLoyaltyClient
             throw new RuntimeException("cannot update a member with no \$id");
         }
 
-        $request = $this->createPutRequest("lists/{$member->list_id}/members/{$member->member_id}");
+        $request = $this->createPutRequest("lists/{$member->list_id}/members/{$member->id}");
 
         /** @var QueryString $post */
+        /** @noinspection PhpUndefinedMethodInspection */
         $post = $request->getPostFields();
 
         $fields = $this->getList($member->list_id)->fields;
@@ -410,6 +412,7 @@ class HeyLoyaltyClient
         $request = $this->createPutRequest("lists/{$list_id}/members/{$member_id}");
 
         /** @var QueryString $post */
+        /** @noinspection PhpUndefinedMethodInspection */
         $post = $request->getPostFields();
 
         $fields = $this->getList($list_id)->fields;

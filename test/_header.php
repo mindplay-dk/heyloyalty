@@ -31,6 +31,7 @@ function ok($result, $why = null, $value = null)
     } else {
         echo "# FAIL: " . ($why === null ? 'ERROR' : $why) . ($value === null ? '' : ' - ' . format($value, true)) . "\n";
         status(false);
+        exit(status());
     }
 }
 
