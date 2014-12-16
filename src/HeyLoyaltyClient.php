@@ -131,7 +131,7 @@ class HeyLoyaltyClient
      */
     protected function createDeleteRequest($uri = null, $headers = null, $body = null, array $options = array())
     {
-        $request = $this->client->delete();
+        $request = $this->client->delete($uri, $headers, $body, $options);
 
         $this->signRequest($request);
 
@@ -156,13 +156,17 @@ class HeyLoyaltyClient
         return $this->list_cache[$list_id];
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getLists()
-	{
-		return $this->createGetRequest("lists")->send()->json(); // TODO build out a model
-	}
+//	/**
+//	 * @return array
+//	 */
+//	public function getLists()
+//	{
+//        $data = $this->createGetRequest("lists")->send()->json();
+//
+//        return $data;
+//
+//        // TODO implement HeyLoyaltyListInfo and return HeyLoyaltyListInfo[]
+//	}
 
 	/**
      * Find a list of members by matching against a custom set of criteria.
@@ -365,14 +369,14 @@ class HeyLoyaltyClient
         $fields = $this->getList($member->list_id)->fields;
 
         foreach ($fields as $name => $field) {
-            if (isset($data[$name])) {
-                $post->add($name, $this->mediator->formatValue($field->format, $data[$name]));
+            if ($member->$name !== null) {
+                $post->add($name, $this->mediator->formatValue($field->format, $member->$name));
             }
         }
 
         $response = $request->send();
 
-        if ($response->getStatusCode() !== 201) {
+        if ($response->getStatusCode() !== 204) {
             throw new RuntimeException("unexpected HTTP status code {$response->getStatusCode()} - response: \n" . $response->getBody(true));
         }
     }
@@ -390,7 +394,7 @@ class HeyLoyaltyClient
 
         $response = $request->send();
 
-        if ($response->getStatusCode() !== 201) {
+        if ($response->getStatusCode() !== 204) {
             throw new RuntimeException("unexpected HTTP status code {$response->getStatusCode()} - response: \n" . $response->getBody(true));
         }
     }

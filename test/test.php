@@ -56,6 +56,27 @@ if ($member instanceof HeyLoyaltyMember) {
     unset($member);
 }
 
+
+//TODO implement test
+//test(
+//    'Can enumerate lists',
+//    function () use ($client) {
+//        $lists = $client->getLists();
+//
+//        $valid = 0;
+//
+//        foreach ($lists as $list) {
+//            if ($list instanceof HeyLoyaltyListInfo) {
+//                $valid += 1;
+//            }
+//        }
+//
+//        ok($valid > 1, 'returns at least one valid list', $valid);
+//
+//        eq($valid, count($lists), 'all lists returned as objects');
+//    }
+//);
+
 test(
     'Can get List information',
     function () use ($client, $ALL_EXPECTED_FIELDS, $EXPECTED_FIXED_FIELDS, $EXPECTED_CUSTOM_FIELDS) {
