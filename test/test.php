@@ -191,6 +191,22 @@ test(
 );
 
 test(
+    'Can enumerate list members',
+    function () use ($client) {
+        $count = 0;
+
+        $client->enumerateListMembers(
+            HEY_LOYALTY_LIST_ID,
+            function (HeyLoyaltyMember $member) use (&$count) {
+                $count += 1;
+            }
+        );
+
+        eq($count, 2, 'enumerated all members');
+    }
+);
+
+test(
     'Can delete a member',
     function () use ($client) {
         $member = $client->getListMemberByEmail(HEY_LOYALTY_LIST_ID, TEST_EMAIL);
