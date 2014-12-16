@@ -15,7 +15,7 @@ class HeyLoyaltyListFilter
      */
     public function equalTo($field_name, $value)
     {
-        $this->filters["filter[{$field_name}][eq][]"] = (string) $value;
+        $this->filters["filter[{$field_name}][eq][]"] = (string)$value;
     }
 
     /**
@@ -24,7 +24,7 @@ class HeyLoyaltyListFilter
      */
     public function notEqualTo($field_name, $value)
     {
-        $this->filters["filter[{$field_name}][neq][]"] = (string) $value;
+        $this->filters["filter[{$field_name}][neq][]"] = (string)$value;
     }
 
     // TODO build out remaining filter functions

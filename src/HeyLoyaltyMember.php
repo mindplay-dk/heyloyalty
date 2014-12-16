@@ -2,8 +2,6 @@
 
 namespace mindplay\heyloyalty;
 
-use RuntimeException;
-
 /**
  * This class represents an individual Hey Loyalty List Member.
  *

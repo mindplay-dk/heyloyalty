@@ -5,7 +5,7 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 // https://gist.github.com/mindplay-dk/4260582
 
 /**
- * @param string   $name     test description
+ * @param string $name test description
  * @param callable $function test implementation
  */
 function test($name, $function)
@@ -20,25 +20,26 @@ function test($name, $function)
 }
 
 /**
- * @param bool   $result result of assertion
- * @param string $why    description of assertion
- * @param mixed  $value  optional value (displays on failure)
+ * @param bool $result result of assertion
+ * @param string $why description of assertion
+ * @param mixed $value optional value (displays on failure)
  */
 function ok($result, $why = null, $value = null)
 {
     if ($result === true) {
         echo "- PASS: " . ($why === null ? 'OK' : $why) . ($value === null ? '' : ' (' . format($value) . ')') . "\n";
     } else {
-        echo "# FAIL: " . ($why === null ? 'ERROR' : $why) . ($value === null ? '' : ' - ' . format($value, true)) . "\n";
+        echo "# FAIL: " . ($why === null ? 'ERROR' : $why) . ($value === null ? '' : ' - ' . format($value,
+                    true)) . "\n";
         status(false);
         exit(status());
     }
 }
 
 /**
- * @param mixed  $value    value
- * @param mixed  $expected expected value
- * @param string $why      description of assertion
+ * @param mixed $value value
+ * @param mixed $expected expected value
+ * @param string $why description of assertion
  */
 function eq($value, $expected, $why = null)
 {
@@ -52,9 +53,9 @@ function eq($value, $expected, $why = null)
 }
 
 /**
- * @param string   $exception_type Exception type name
- * @param string   $why            description of assertion
- * @param callable $function       function expected to throw
+ * @param string $exception_type Exception type name
+ * @param string $why description of assertion
+ * @param callable $function function expected to throw
  */
 function expect($exception_type, $why, $function)
 {
@@ -76,7 +77,7 @@ function expect($exception_type, $why, $function)
 
 /**
  * @param mixed $value
- * @param bool  $verbose
+ * @param bool $verbose
  *
  * @return string
  */
@@ -87,7 +88,7 @@ function format($value, $verbose = false)
         . ($verbose ? ": \"" . $value->__toString() . "\"" : '');
     }
 
-    if (! $verbose && is_array($value)) {
+    if (!$verbose && is_array($value)) {
         return 'array[' . count($value) . ']';
     }
 

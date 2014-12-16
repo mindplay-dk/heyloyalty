@@ -3,8 +3,6 @@
 use mindplay\heyloyalty\HeyLoyaltyClient;
 use mindplay\heyloyalty\HeyLoyaltyField;
 use mindplay\heyloyalty\HeyLoyaltyList;
-use mindplay\heyloyalty\HeyLoyaltyListFilter;
-use mindplay\heyloyalty\HeyLoyaltyMediator;
 use mindplay\heyloyalty\HeyLoyaltyMember;
 
 define('TEST_EMAIL', 'rasc-2@fynskemedier.dk');
@@ -12,7 +10,7 @@ define('TEST_MOBILE', '87654321');
 
 require __DIR__ . '/_header.php';
 
-if (! file_exists(__DIR__ . '/config.local.php')) {
+if (!file_exists(__DIR__ . '/config.local.php')) {
     throw new RuntimeException("missing config.local.php - please create it to run the test-suite");
 }
 
@@ -115,7 +113,9 @@ test(
  * @property int $choice
  * @property int[] $multi
  */
-abstract class TestMember extends HeyLoyaltyMember {}
+abstract class TestMember extends HeyLoyaltyMember
+{
+}
 
 test(
     'Can mediate between native PHP and Hey Loyalty API field values',

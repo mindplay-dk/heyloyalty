@@ -14,11 +14,11 @@ class HeyLoyaltyList
     const DUPLICATES_ALLOW_MOBILE = 'allow_mobile';
     const DUPLICATES_DISALLOW = 'disallow';
 
-	/** @var int */
-	public $id;
+    /** @var int */
+    public $id;
 
-	/** @var string */
-	public $name;
+    /** @var string */
+    public $name;
 
     /** @var int */
     public $country_id;
@@ -31,6 +31,6 @@ class HeyLoyaltyList
     /** @var string whether this list allows duplicate members; one of the DUPLICATES_* constants */
     public $duplicates;
 
-	/** @var HeyLoyaltyField[] map where field name => field instance */
-	public $fields = array();
+    /** @var HeyLoyaltyField[] map where field name => field instance */
+    public $fields = array();
 }

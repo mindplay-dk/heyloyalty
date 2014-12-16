@@ -2,9 +2,7 @@
 
 namespace mindplay\heyloyalty;
 
-use Exception;
 use Guzzle\Http\Client;
-use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\QueryString;
 use RuntimeException;
@@ -14,17 +12,17 @@ use RuntimeException;
  */
 class HeyLoyaltyClient
 {
-	/** @type string API endpoint */
-	const BASE_URL = 'https://api.heyloyalty.com/loyalty/v1';
+    /** @type string API endpoint */
+    const BASE_URL = 'https://api.heyloyalty.com/loyalty/v1';
 
-	/** @var string */
-	private $api_key;
+    /** @var string */
+    private $api_key;
 
-	/** @var string */
-	private $api_secret;
+    /** @var string */
+    private $api_secret;
 
-	/** @var Client HTTP client */
-	private $client;
+    /** @var Client HTTP client */
+    private $client;
 
     /** @var HeyLoyaltyList[] map of cached Lists where List ID => HeyLoyaltyList */
     private $list_cache = array();
@@ -32,18 +30,18 @@ class HeyLoyaltyClient
     /** @var HeyLoyaltyMediator */
     private $mediator;
 
-	/**
-	 * @param string $api_key
-	 * @param string $api_secret
-	 */
-	public function __construct($api_key, $api_secret)
-	{
-		$this->api_key = $api_key;
-		$this->api_secret = $api_secret;
+    /**
+     * @param string $api_key
+     * @param string $api_secret
+     */
+    public function __construct($api_key, $api_secret)
+    {
+        $this->api_key = $api_key;
+        $this->api_secret = $api_secret;
 
-		$this->client = $this->createClient();
+        $this->client = $this->createClient();
         $this->mediator = new HeyLoyaltyMediator();
-	}
+    }
 
     /**
      * @return Client
@@ -53,39 +51,39 @@ class HeyLoyaltyClient
         return new Client(self::BASE_URL);
     }
 
-	/**
-	 * Sign a request for use with the Hey Loyalty API
-	 *
-	 * @param RequestInterface $request
-	 *
-	 * @return void
-	 */
-	private function signRequest(RequestInterface $request)
-	{
-		$timestamp = gmdate("D, d M Y H:i:s") . ' GMT';
+    /**
+     * Sign a request for use with the Hey Loyalty API
+     *
+     * @param RequestInterface $request
+     *
+     * @return void
+     */
+    private function signRequest(RequestInterface $request)
+    {
+        $timestamp = gmdate("D, d M Y H:i:s") . ' GMT';
 
-		$signature = base64_encode(hash_hmac('sha256', $timestamp, $this->api_secret));
+        $signature = base64_encode(hash_hmac('sha256', $timestamp, $this->api_secret));
 
-		$request->setAuth($this->api_key, $signature);
+        $request->setAuth($this->api_key, $signature);
 
-		$request->addHeader('X-Request-Timestamp', $timestamp);
-	}
+        $request->addHeader('X-Request-Timestamp', $timestamp);
+    }
 
-	/**
-	 * @param string $uri
-	 * @param string[] $headers
-	 * @param array $options
-	 *
-	 * @return RequestInterface
-	 */
-	protected function createGetRequest($uri = null, $headers = null, $options = array())
-	{
-		$request = $this->client->get($uri, $headers, $options);
+    /**
+     * @param string $uri
+     * @param string[] $headers
+     * @param array $options
+     *
+     * @return RequestInterface
+     */
+    protected function createGetRequest($uri = null, $headers = null, $options = array())
+    {
+        $request = $this->client->get($uri, $headers, $options);
 
-		$this->signRequest($request);
+        $this->signRequest($request);
 
-		return $request;
-	}
+        return $request;
+    }
 
     /**
      * @param string $uri
@@ -105,21 +103,21 @@ class HeyLoyaltyClient
     }
 
     /**
-	 * @param string $uri
-	 * @param string[] $headers
-	 * @param string $postBody
-	 * @param array $options
-	 *
-	 * @return RequestInterface
-	 */
-	protected function createPostRequest($uri = null, $headers = null, $postBody = null, array $options = array())
-	{
-		$request = $this->client->post($uri, $headers, $postBody, $options);
+     * @param string $uri
+     * @param string[] $headers
+     * @param string $postBody
+     * @param array $options
+     *
+     * @return RequestInterface
+     */
+    protected function createPostRequest($uri = null, $headers = null, $postBody = null, array $options = array())
+    {
+        $request = $this->client->post($uri, $headers, $postBody, $options);
 
-		$this->signRequest($request);
+        $this->signRequest($request);
 
-		return $request;
-	}
+        return $request;
+    }
 
     /**
      * @param string $uri
@@ -138,23 +136,23 @@ class HeyLoyaltyClient
         return $request;
     }
 
-	/**
+    /**
      * Obtain information about a list and it's fields.
      *
      * Lists are cached for subsequent calls.
      *
-	 * @param int $list_id
-	 *
-	 * @return HeyLoyaltyList
-	 */
-	public function getList($list_id)
-	{
+     * @param int $list_id
+     *
+     * @return HeyLoyaltyList
+     */
+    public function getList($list_id)
+    {
         if (!isset($this->list_cache[$list_id])) {
             $this->list_cache[$list_id] = $this->buildList($this->createGetRequest("lists/{$list_id}")->send()->json());
         }
 
         return $this->list_cache[$list_id];
-	}
+    }
 
 //	/**
 //	 * @return array
@@ -168,24 +166,24 @@ class HeyLoyaltyClient
 //        // TODO implement HeyLoyaltyListInfo and return HeyLoyaltyListInfo[]
 //	}
 
-	/**
+    /**
      * Find a list of members by matching against a custom set of criteria.
      *
-	 * @param int $list_id
-	 * @param int $page
-	 * @param int $per_page
+     * @param int $list_id
+     * @param int $page
+     * @param int $per_page
      * @param HeyLoyaltyListFilter|null $filter
-	 *
-	 * @return HeyLoyaltyMember[]
-	 */
-	public function getListMembers($list_id, $page, $per_page, HeyLoyaltyListFilter $filter = null)
-	{
-		$request = $this->createGetRequest("lists/{$list_id}/members");
+     *
+     * @return HeyLoyaltyMember[]
+     */
+    public function getListMembers($list_id, $page, $per_page, HeyLoyaltyListFilter $filter = null)
+    {
+        $request = $this->createGetRequest("lists/{$list_id}/members");
 
-		$request->getQuery()
-			->add('page', $page)
-			->add('perpage', $per_page)
-			->add('orderby', 'created_at');
+        $request->getQuery()
+            ->add('page', $page)
+            ->add('perpage', $per_page)
+            ->add('orderby', 'created_at');
 
         if ($filter !== null) {
             $params = $request->getQuery();
@@ -208,7 +206,7 @@ class HeyLoyaltyClient
         }
 
         return $members;
-	}
+    }
 
     /**
      * Find a list member by e-mail address.
@@ -282,18 +280,19 @@ class HeyLoyaltyClient
         } while (count($members));
     }
 
-	/**
+    /**
      * Get an individual Member with a known Hey Loyalty Member GUID
      *
-	 * @param int $list_id
-	 * @param string $member_id Hey Loyalty Member GUID
-	 *
-	 * @return HeyLoyaltyMember
-	 */
-	public function loadMember($list_id, $member_id)
-	{
-		return $this->buildMember($list_id, $this->createGetRequest("lists/{$list_id}/members/{$member_id}")->send()->json());
-	}
+     * @param int $list_id
+     * @param string $member_id Hey Loyalty Member GUID
+     *
+     * @return HeyLoyaltyMember
+     */
+    public function loadMember($list_id, $member_id)
+    {
+        return $this->buildMember($list_id,
+            $this->createGetRequest("lists/{$list_id}/members/{$member_id}")->send()->json());
+    }
 
     /**
      * Save a new or existing Member.
@@ -356,7 +355,7 @@ class HeyLoyaltyClient
      */
     public function updateMember(HeyLoyaltyMember $member)
     {
-        if (! $member->id) {
+        if (!$member->id) {
             throw new RuntimeException("cannot update a member with no \$id");
         }
 
@@ -434,58 +433,58 @@ class HeyLoyaltyClient
         }
     }
 
-	/**
-	 * @param array $data
-	 *
-	 * @return HeyLoyaltyList
-	 */
-	private function buildList($data)
-	{
-		$list = new HeyLoyaltyList();
+    /**
+     * @param array $data
+     *
+     * @return HeyLoyaltyList
+     */
+    private function buildList($data)
+    {
+        $list = new HeyLoyaltyList();
 
-		$list->id = (int) $data['id'];
-		$list->name = utf8_decode($data['name']);
-        $list->country_id = (int) $data['country_id'];
+        $list->id = (int)$data['id'];
+        $list->name = utf8_decode($data['name']);
+        $list->country_id = (int)$data['country_id'];
         $list->date_format = $data['date_format'];
         $list->duplicates = $data['duplicates'];
 
-		$list->fields = $this->buildFields($list->id, $data['fields']);
+        $list->fields = $this->buildFields($list->id, $data['fields']);
 
-		return $list;
-	}
+        return $list;
+    }
 
-	/**
-	 * @param int $list_id
-	 * @param array $field_data
-	 *
-	 * @return HeyLoyaltyField[]
-	 */
-	private function buildFields($list_id, $field_data)
-	{
-		$fields = array();
+    /**
+     * @param int $list_id
+     * @param array $field_data
+     *
+     * @return HeyLoyaltyField[]
+     */
+    private function buildFields($list_id, $field_data)
+    {
+        $fields = array();
 
-		foreach ($field_data as $data) {
-			$field = new HeyLoyaltyField();
+        foreach ($field_data as $data) {
+            $field = new HeyLoyaltyField();
 
-			$field->id = (int) $data['id'];
-			$field->list_id = $list_id;
-			$field->name = utf8_decode($data['name']);
-			$field->label = utf8_decode($data['label']);
-			$field->required_in_shop = (bool) $data['required_in_shop'];
-			$field->fallback = $data['fallback'];
-			$field->type = $data['type'];
-			$field->type_id = (int) $data['type_id'];
-			$field->format = $data['format'];
+            $field->id = (int)$data['id'];
+            $field->list_id = $list_id;
+            $field->name = utf8_decode($data['name']);
+            $field->label = utf8_decode($data['label']);
+            $field->required_in_shop = (bool)$data['required_in_shop'];
+            $field->fallback = $data['fallback'];
+            $field->type = $data['type'];
+            $field->type_id = (int)$data['type_id'];
+            $field->format = $data['format'];
 
-			if (isset($data['options'])) {
-				$field->options = array_map('utf8_decode', $data['options']);
-			}
+            if (isset($data['options'])) {
+                $field->options = array_map('utf8_decode', $data['options']);
+            }
 
-			$fields[$field->name] = $field;
-		}
+            $fields[$field->name] = $field;
+        }
 
-		return $fields;
-	}
+        return $fields;
+    }
 
     /**
      * Build a new member instance using data from the Hey Loyalty API

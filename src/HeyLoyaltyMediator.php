@@ -16,7 +16,7 @@ class HeyLoyaltyMediator
      *
      * @param string $format the field format; one of the HeyLoyaltyField::FORMAT_* constants
      * @param mixed $value Hey Loyalty field value
-     * 
+     *
      * @return mixed native PHP value
      */
     public function parseValue($format, $value)
@@ -71,19 +71,19 @@ class HeyLoyaltyMediator
 
             case HeyLoyaltyField::FORMAT_TEXT:
             case HeyLoyaltyField::FORMAT_PASSWORD:
-                return utf8_encode((string) $value);
+                return utf8_encode((string)$value);
 
             case HeyLoyaltyField::FORMAT_DATE:
                 return $this->formatDateTime($value);
 
             case HeyLoyaltyField::FORMAT_NUMBER:
-                return (string) $value;
+                return (string)$value;
 
             case HeyLoyaltyField::FORMAT_CHOICE:
-                return (string) $value;
+                return (string)$value;
 
             case HeyLoyaltyField::FORMAT_MULTI:
-                return (array) $value;
+                return (array)$value;
 
             default:
                 throw new RuntimeException("unsupported field format: {$format}");
