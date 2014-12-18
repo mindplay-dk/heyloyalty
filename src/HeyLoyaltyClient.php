@@ -223,7 +223,7 @@ class HeyLoyaltyClient
         $filter = new HeyLoyaltyListFilter();
         $filter->equalTo('email', $email);
 
-        $members = $this->getMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
+        $members = $this->getMembers($list_id, 1, 1, $filter);
 
         return count($members) ? $members[0] : null;
     }
@@ -243,7 +243,7 @@ class HeyLoyaltyClient
         $filter = new HeyLoyaltyListFilter();
         $filter->equalTo('mobile', $mobile);
 
-        $members = $this->getMembers(HEY_LOYALTY_LIST_ID, 1, 1, $filter);
+        $members = $this->getMembers($list_id, 1, 1, $filter);
 
         return count($members) ? $members[0] : null;
     }
